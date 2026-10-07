@@ -14,7 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://bytebank-patterns-frontend.onrender.com")
 @RequestMapping("/contas")
 public class ContaController {
 
