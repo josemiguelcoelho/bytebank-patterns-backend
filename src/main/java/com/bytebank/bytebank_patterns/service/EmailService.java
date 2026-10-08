@@ -1,56 +1,60 @@
+
 package com.bytebank.bytebank_patterns.service;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+
+import java.util.Map;
 
 @Service
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private final RestClient restClient;
 
-    @Value("${spring.mail.username}")
-    private String remetente;
+    @Value("${resend.api.key}")
+    private String resendApiKey;
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    public EmailService(RestClient.Builder builder) {
+        this.restClient = builder
+                .baseUrl("https://api.resend.com")
+                .build();
     }
 
     public void enviarEmailRecuperacao(
             String destinatario,
             String token
     ) {
-
         String linkRecuperacao =
-                frontendUrl
-                        + "/?resetToken="
-                        + token;
+                frontendUrl + "/?resetToken=" + token;
 
-        SimpleMailMessage mensagem =
-                new SimpleMailMessage();
-
-        mensagem.setFrom(remetente);
-        mensagem.setTo(destinatario);
-        mensagem.setSubject(
-                "ByteBank - Redefinição de senha"
-        );
-
-        mensagem.setText(
+        String mensagem =
                 "Olá!\n\n"
                 + "Recebemos uma solicitação para redefinir "
                 + "a senha da sua conta ByteBank.\n\n"
-                + "Acesse o link abaixo para criar uma nova senha:\n\n"
+                + "Acesse o link abaixo:\n\n"
                 + linkRecuperacao
                 + "\n\nEste link expira em 15 minutos."
                 + "\n\nSe você não solicitou a alteração, "
-                + "ignore este e-mail."
-                + "\n\nByteBank"
-        );
+                + "ignore este e-mail.\n\n"
+                + "ByteBank";
 
-        mailSender.send(mensagem);
+        restClient.post()
+                .uri("/emails")
+                .header("Authorization", "Bearer " + resendApiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of(
+                        "from", "ByteBank <onboarding@resend.dev>",
+                        "to", destinatario,
+                        "subject", "ByteBank - Redefinição de senha",
+                        "text", mensagem
+                ))
+                .retrieve()
+                .toBodilessEntity();
     }
 }
+
