@@ -19,11 +19,14 @@ public class EmailService {
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
-    public EmailService(RestClient.Builder builder) {
-        this.restClient = builder
-                .baseUrl("https://api.resend.com")
-                .build();
-    }
+   
+public EmailService() {
+    this.restClient = RestClient.builder()
+            .baseUrl("https://api.resend.com")
+            .build();
+}
+
+
 
     public void enviarEmailRecuperacao(
             String destinatario,
